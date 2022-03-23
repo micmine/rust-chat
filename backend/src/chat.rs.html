@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>~/Documents/rust/rocket-chat-app/backend/src/chat.rs.html</title>
+<meta name="Generator" content="Vim/8.0">
+<meta name="plugin-version" content="vim8.1_v2">
+<meta name="syntax" content="none">
+<meta name="settings" content="number_lines,use_css,pre_wrap,no_foldcolumn,expand_tabs,line_ids,prevent_copy=,use_input_for_pc=fallback">
+<meta name="colorscheme" content="tokyonight">
+<style>
+<!--
+pre { white-space: pre-wrap; font-family: monospace; color: #c0caf5; background-color: #24283b; }
+body { font-family: monospace; color: #c0caf5; background-color: #24283b; }
+* { font-size: 1em; }
+.LineNr { color: #3b4261; }
+-->
+</style>
+
+<script>
+<!--
+
+/* function to open any folds containing a jumped-to line before jumping to it */
+function JumpToLine()
+{
+  var lineNum;
+  lineNum = window.location.hash;
+  lineNum = lineNum.substr(1); /* strip off '#' */
+
+  if (lineNum.indexOf('L') == -1) {
+    lineNum = 'L'+lineNum;
+  }
+  var lineElem = document.getElementById(lineNum);
+  /* Always jump to new location even if the line was hidden inside a fold, or
+   * we corrected the raw number to a line ID.
+   */
+  if (lineElem) {
+    lineElem.scrollIntoView(true);
+  }
+  return true;
+}
+if ('onhashchange' in window) {
+  window.onhashchange = JumpToLine;
+}
+
+-->
+</script>
+</head>
+<body onload='JumpToLine();'>
+<pre id='vimCodeElement'>
+<span id="L1" class="LineNr"> 1 </span>use rocket::form::FromForm;
+<span id="L2" class="LineNr"> 2 </span>use rocket::response::stream::{Event, EventStream};
+<span id="L3" class="LineNr"> 3 </span>use rocket::serde::json::Json;
+<span id="L4" class="LineNr"> 4 </span>use rocket::serde::Deserialize;
+<span id="L5" class="LineNr"> 5 </span>use rocket::tokio::select;
+<span id="L6" class="LineNr"> 6 </span>use rocket::tokio::sync::broadcast::{error::RecvError, Sender};
+<span id="L7" class="LineNr"> 7 </span>use rocket::Shutdown;
+<span id="L8" class="LineNr"> 8 </span>use rocket::{serde::Serialize, State};
+<span id="L9" class="LineNr"> 9 </span>
+<span id="L10" class="LineNr">10 </span>#[derive(Debug, Clone, FromForm, Serialize, Deserialize)]
+<span id="L11" class="LineNr">11 </span>#[serde(crate = &quot;rocket::serde&quot;)]
+<span id="L12" class="LineNr">12 </span>pub struct Message {
+<span id="L13" class="LineNr">13 </span>    #[field(validate = len(..30))]
+<span id="L14" class="LineNr">14 </span>    pub room: String,
+<span id="L15" class="LineNr">15 </span>    #[field(validate = len(..20))]
+<span id="L16" class="LineNr">16 </span>    pub username: String,
+<span id="L17" class="LineNr">17 </span>    #[field(validate = len(..30))]
+<span id="L18" class="LineNr">18 </span>    pub message: String,
+<span id="L19" class="LineNr">19 </span>}
+<span id="L20" class="LineNr">20 </span>
+<span id="L21" class="LineNr">21 </span>#[post(&quot;/post&quot;, format = &quot;json&quot;, data = &quot;&lt;data&gt;&quot;)]
+<span id="L22" class="LineNr">22 </span>pub fn post(data: Json&lt;Message&gt;, queue: &amp;State&lt;Sender&lt;Message&gt;&gt;) {
+<span id="L23" class="LineNr">23 </span>    // Fails if there are no subscribers
+<span id="L24" class="LineNr">24 </span>    //let message = data
+<span id="L25" class="LineNr">25 </span>    let _res = queue.send(message);
+<span id="L26" class="LineNr">26 </span>}
+<span id="L27" class="LineNr">27 </span>
+<span id="L28" class="LineNr">28 </span>#[get(&quot;/events&quot;)]
+<span id="L29" class="LineNr">29 </span>pub async fn events(queue: &amp;State&lt;Sender&lt;Message&gt;&gt;, mut end: Shutdown) -&gt; EventStream![] {
+<span id="L30" class="LineNr">30 </span>    let mut rx = queue.subscribe();
+<span id="L31" class="LineNr">31 </span>    EventStream! {
+<span id="L32" class="LineNr">32 </span>        loop {
+<span id="L33" class="LineNr">33 </span>            let msg = select! {
+<span id="L34" class="LineNr">34 </span>                msg = rx.recv() =&gt; match msg {
+<span id="L35" class="LineNr">35 </span>                    Ok(msg) =&gt; msg,
+<span id="L36" class="LineNr">36 </span>                    Err(RecvError::Closed) =&gt; break,
+<span id="L37" class="LineNr">37 </span>                    Err(RecvError::Lagged(_)) =&gt; continue,
+<span id="L38" class="LineNr">38 </span>                },
+<span id="L39" class="LineNr">39 </span>                _ = &amp;mut end =&gt; break,
+<span id="L40" class="LineNr">40 </span>            };
+<span id="L41" class="LineNr">41 </span>
+<span id="L42" class="LineNr">42 </span>            yield Event::json(&amp;msg);
+<span id="L43" class="LineNr">43 </span>        }
+<span id="L44" class="LineNr">44 </span>    }
+<span id="L45" class="LineNr">45 </span>}
+</pre>
+</body>
+</html>
+<!-- vim: set foldmethod=manual : -->
