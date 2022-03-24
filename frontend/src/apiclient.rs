@@ -40,7 +40,7 @@ pub async fn load() {
     };
     let _conection = EventSourceService::connect("/api/chat/events", callback);
 
-    log::info!("active: {}", _conection.event_source.ready_state());
+    //log::info!("active: {}", _conection.event_source.ready_state());
 
     //let event_source = EventSource::new("/api/chat/events").unwrap();
 
