@@ -3,7 +3,7 @@ use wasm_bindgen_futures::spawn_local;
 use web_sys::{EventTarget, HtmlInputElement};
 use yew::prelude::*;
 
-use crate::apiclient;
+use crate::apiclient::{self, MessageDTO};
 
 #[derive(Debug)]
 pub struct InputBox {
@@ -16,9 +16,16 @@ pub enum Msg {
     Send,
 }
 
+#[derive(Properties, PartialEq, Clone)]
+pub struct InputBoxProps {
+    pub user_id: usize,
+    pub user_name: String,
+    pub room: String,
+}
+
 impl Component for InputBox {
     type Message = Msg;
-    type Properties = ();
+    type Properties = InputBoxProps;
 
     fn create(_ctx: &Context<Self>) -> Self {
         Self {
@@ -35,10 +42,16 @@ impl Component for InputBox {
             Msg::Send => {
                 log::info!("Send message, {}", self.content);
                 let content = self.content.clone();
+                let message = MessageDTO {
+                    room: ctx.props().room.clone(),
+                    user_id: ctx.props().user_id,
+                    user_name: ctx.props().user_name.clone(),
+                    message: content,
+                };
                 spawn_local(async move {
-                    apiclient::send(&content).await;
+                    apiclient::send(message).await.unwrap();
                 });
-                false
+                true
             }
         }
     }

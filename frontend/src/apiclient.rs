@@ -9,10 +9,9 @@ use yew::prelude::*;
 
 //use sse_client::EventSource;
 
-pub async fn send(message: &str) -> Result<()> {
+pub async fn send(body: MessageDTO) -> Result<()> {
     // TODO: validate
 
-    let body = Message::new(message);
     let body = serde_json::to_string(&body)?;
 
     // create request
@@ -47,28 +46,10 @@ pub fn load(cb: Callback<String>) -> (EventSource, EventListener) {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Message {
+pub struct MessageDTO {
     pub room: String,
-    pub username: String,
+    pub user_id: usize,
+    pub user_name: String,
     pub message: String,
 }
 
-impl Default for Message {
-    fn default() -> Self {
-        Self {
-            room: String::from("room"),
-            username: String::from("room"),
-            message: String::from("room"),
-        }
-    }
-}
-
-impl Message {
-    fn new(message: &str) -> Self {
-        Self {
-            room: String::from("a"),
-            username: String::from("a"),
-            message: String::from(message),
-        }
-    }
-}

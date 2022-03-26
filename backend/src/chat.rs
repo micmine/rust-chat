@@ -12,8 +12,9 @@ use rocket::{serde::Serialize, State};
 pub struct Message {
     #[field(validate = len(..30))]
     pub room: String,
+    pub user_id: usize,
     #[field(validate = len(..20))]
-    pub username: String,
+    pub user_name: String,
     #[field(validate = len(..30))]
     pub message: String,
 }
