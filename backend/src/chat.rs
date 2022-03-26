@@ -39,7 +39,7 @@ pub async fn events(queue: &State<Sender<Message>>, mut end: Shutdown) -> EventS
                 _ = &mut end => break,
             };
 
-            yield Event::json(&msg);
+            yield Event::json(&msg).event("messages");
         }
     }
 }

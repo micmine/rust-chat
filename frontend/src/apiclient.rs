@@ -1,12 +1,11 @@
-use std::rc::Rc;
-
+use gloo_events::EventListener;
 use reqwasm::http::Request;
 use serde::{Deserialize, Serialize};
-use web_sys::EventSource;
-use yew::Callback::Callback;
+use wasm_bindgen::{JsCast, JsValue};
+use web_sys::{EventSource, MessageEvent};
 
-use crate::sse::EventSourceService;
 use serde_json::Result;
+use yew::prelude::*;
 
 //use sse_client::EventSource;
 
@@ -30,23 +29,21 @@ pub async fn send(message: &str) -> Result<()> {
     Ok(())
 }
 
-pub async fn load() {
-    fn on_message(msg: String) {
-        log::info!("{:?}", msg);
-    }
-    let callback = Callback {
-        cb: Rc::new(on_message),
-        passive: Some(false),
-    };
-    let _conection = EventSourceService::connect("/api/chat/events", callback);
+pub fn load(cb: Callback<String>) -> (EventSource, EventListener) {
+    let es = EventSource::new("/api/chat/events")
+        .map_err(|js_value: JsValue| {
+            let err: js_sys::Error = js_value.dyn_into().unwrap();
+            err
+        })
+        .unwrap();
 
-    //log::info!("active: {}", _conection.event_source.ready_state());
+    let listener = EventListener::new(&es, "messages", move |event: &Event| {
+        let event = event.dyn_ref::<MessageEvent>().unwrap();
+        let text = event.data().as_string().unwrap();
+        cb.emit(text);
+    });
 
-    //let event_source = EventSource::new("/api/chat/events").unwrap();
-
-    //event_source.on_message(|message| {
-        //println!("New message event {:?}", message);
-    //});
+    (es, listener)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
